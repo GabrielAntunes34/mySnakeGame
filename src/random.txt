@@ -1,0 +1,80 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ncurses.h>
+#include "snake.h"
+
+// MANTER
+void moveaddch(int y, int x, char c) {
+    move(y, x);
+    addch(c);
+}
+
+// MUDAR????
+void firstDrawnSnake(PAIR *pos, int size) {
+    int x = pairGetX(pos);
+    int y = pairGetY(pos);
+
+    move(y, x);
+    addch(SNAKE_HEAD);
+    for(int i = size; i > 1; i--) {
+        x--;
+        move(y, x);
+        addch(SNAKE_BODY);
+    }
+
+    refresh();
+    return;
+}
+
+// MANTER: FUNCIONA PARA REDESENHA-LA SEMPRE
+void drawnSnake(PAIR *tail, PAIR *head, PAIR *newHead) {
+    moveaddch(pairGetY(tail), pairGetX(tail), ' ');
+    moveaddch(pairGetY(newHead), pairGetX(newHead), SNAKE_HEAD);
+    moveaddch(pairGetY(head), pairGetX(head), SNAKE_BODY);
+    refresh();
+}
+
+int main() {
+    PAIR *headPosition;
+    SNAKE *ss;
+
+    // Instanciating our snake
+    headPosition = pairCreate(8, 5);
+    if(headPosition == NULL)
+        return 1;
+    ss = snakeCreate(headPosition, 3);
+    if(ss == NULL)
+        return 1;
+
+
+    // SCREEEEEEEEEEEEEN
+    initscr();
+    curs_set(0);
+    noecho();
+
+    // Drawing our little snake
+    firstDrawnSnake(headPosition, snakeGetSize(ss));
+
+    // Moving a bit foward
+    getch();
+    for(int i = 0; i < 3; i++) {
+        move(0, i);
+        addch('a');
+
+        pairIncrementY(headPosition);
+        drawnSnake(snakeGetTail(ss), snakeGetPosition(ss), headPosition);
+        snakeMove(ss, headPosition);
+
+        napms(1000);
+    }
+
+    getch();
+    endwin();
+
+    //printf("Alguem está a segfaultar\n");
+    //printf("fdsafklsajfsa;fjsda\n\n");
+
+    pairDelete(&headPosition);
+    snakeDelete(&ss);
+    return 0;
+}

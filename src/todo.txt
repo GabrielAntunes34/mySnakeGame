@@ -1,0 +1,114 @@
+SNAKE:
+    lista encadeada de celulas com cabeça, fimDaCauda, tamanho, cor (Por que não???)
+    sprites: * e #
+
+    tamanho mínimo antes de ser... Morrível: 4... Começar com 3 pra dar tempo de entender a base
+    Deve ter um algorítimo para move-la mantendo as colisões (nao desenhar aqui? ISSO)
+    Um para aumentar seu tamanho a cada fruta consumida
+    Um para calcular a colisão com ela mesma
+
+    movendo:
+        Cada pair terá de ser atualizado
+        for(snakeCels)
+            snakeCel = snakeCelPrevious
+        snake->head = newHeadPosition
+
+        desenhando isso (na main? SIM):
+            se: !em_fruta
+                apaga spriteFimDaCauda
+                newHeadPosition pintada com #  
+                Anterior dela pintada com *         
+
+LEVEL:
+    SNAKE
+    score
+    vet FRUITS;
+    WIDTH;
+    HIGTH;
+
+    levelcreate(W, H, N_FRUITS, MODE)
+        instanciate SNAKE
+        coloca-la em posicao
+        gerar primeiras frutas
+        score = 0
+        desenhar level ui
+        desenhar SNAKE
+        desenhar fruta
+
+    levelGetInput();
+
+    fruitColision()
+        score++;
+        snakeIncrease
+
+    DeathColistion()
+        snakeInnerColision();
+        verificar colisoes com as paredes
+
+    DrawnSnake();
+    DrawnFruit();
+
+    levelDelete();
+
+
+Fruit:
+    PAIR position;
+    int value;
+    bool Tangible;
+    bool healthy;
+
+    fruitCreate();
+
+    fruitGetPosition();
+    fruitGetValue();
+    fruitIsTangible();
+    fruitIsHealthy();
+
+    fruitSetPosition();
+    fruitSetValue();
+    fruitInvertTangibility();
+    fruitInvertyHealthness();
+    
+    fruiteErase();
+
+GAMELOOP:
+    Saber tamanho da tela
+    Instanciar SNAKE
+    Gerar uma fruta
+    manter  score
+    calcular colisões
+
+
+LEVEL:
+    VET SNAKES
+    score
+    FRUTA;
+    WIDTH;
+    HIGTH;
+
+    levelcreate(W, H, N_SNAKES)
+        instanciate SNAKE
+        coloca-las em posicao
+        gerar primeira fruta
+        score = 0
+        desenhar level ui
+        desenhar SNAKE
+        desenhar fruta
+
+    levelGetInput();
+
+    fruitColision()
+        score++;
+        snakeIncrease
+
+    DeathColistion()
+        snakeInnerColision();
+        verificar colisoes com as paredes
+
+    DrawnSnake();
+    DrawnFruit();
+
+    levelDelete();
+
+        
+
