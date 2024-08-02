@@ -172,23 +172,11 @@ int gameLoop(LEVEL *level) {
         napms(100);
     }
 
-    mvaddstr(0, 0, "AAAAAAAAAAAAAAAH");
-    refresh();
-    napms(500);
-
     // Verifying if the level ended with a death or completed
-    if(levelWon(level)) {
-        mvaddstr(3, 0, "NAO");
-        refresh();
-        napms(500);
+    if(levelWon(level))
         return 5;
-    }
-    else {
-        mvaddstr(2,0, "resetou....");
-        refresh();
-        napms(500);
+    else
         return 4;
-    }
 }
 
 /*int gameLoop2(LEVEL *level) {
@@ -242,7 +230,7 @@ int main() {
                 break;
 
             case 2:    // Game mode 2 entered
-                gameWindow = renderGameScreen(scrDimensions);
+                // gameWindow = renderGameScreen(scrDimensions);
                 //level = levelCreate();
                 //menuOption = gameLoop(level);
                 break;
