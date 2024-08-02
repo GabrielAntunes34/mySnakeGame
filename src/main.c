@@ -1,38 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ncurses.h>
-#include "snake.h"
-#include "fruit.h"
+#include "level.h"
 
 #define txtButton1 "   Classic   "
 #define txtButton2 "Rotten fruits"
 #define txtButton3 "  Quit game  "
+#define txtScore "SCORE: 00000000000"
 
+#define gameWidth 50
+#define gameHeight 50
 
 // MUDAR????
-void firstDrawnSnake(PAIR *pos, int size) {
-    int x = pairGetX(pos);
-    int y = pairGetY(pos);
-
-    move(y, x);
-    addch(SNAKE_HEAD);
-    for(int i = size; i > 1; i--) {
-        x--;
-        move(y, x);
-        addch(SNAKE_BODY);
-    }
-
-    refresh();
-    return;
-}
 
 // MANTER: FUNCIONA PARA REDESENHÁ-LA SEMPRE
-void drawnSnake(PAIR *tail, PAIR *head, PAIR *newHead) {
-    mvaddch(pairGetY(tail), pairGetX(tail), ' ');
-    mvaddch(pairGetY(newHead), pairGetX(newHead), SNAKE_HEAD);
-    mvaddch(pairGetY(head), pairGetX(head), SNAKE_BODY);
-    refresh();
-}
 
 
 // UI function to drwan the menu screen of the game
@@ -43,7 +24,7 @@ void drawnMenuScreen(PAIR *scrDimensions) {
     int buttonPosY = pairGetY(scrDimensions) / 2 - 2;
 
     // Drawning the title
-    attron(A_BOLD | A_BLINK | COLOR_PAIR(1));
+    attrset(A_BOLD | A_BLINK | COLOR_PAIR(1));
     mvaddstr(0, titlePosX, "+----------+");
     mvaddstr(1, titlePosX, "|SNAKE GAME|");
     mvaddstr(2, titlePosX, "+----------+");
@@ -66,9 +47,11 @@ PAIR *initialize() {
     PAIR *scrDimensions;
 
     initscr();
+    noecho();
+    cbreak();
+    timeout(0);
     curs_set(0);
     start_color();
-    noecho();
 
     // Retrieving the maximum size of our screen
     getmaxyx(stdscr, maxy, maxx);
@@ -165,15 +148,72 @@ int enterOption(PAIR *scrDimensions) {
 
 }
 
+WINDOW *renderGameScreen(PAIR *scrDimensions) {
+    WINDOW *wind;
+
+    // Drawning the score
+    clear();
+    mvaddstr(0, (pairGetX(scrDimensions) - 18) / 2, txtScore);
+    refresh();
+
+    wind = newwin(25, 50, (pairGetY(scrDimensions) - 25) / 2, (pairGetX(scrDimensions) - 50) / 2);
+    //wborder(wind, '|', '|', "-", '-', '+', '+', '+', '+');
+    box(wind, 0, 0);
+    wrefresh(wind);
+    return wind;
+}
+
+// Manages the main loop of gameplay for all gameModes
 int gameLoop(LEVEL *level) {
+    // the loop ends when the player dies or complete the level
     while(!levelEnded(level)) {
-        levelGetUserInput();
-        
+        levelGetUserInput(level);
+        levelHandleColisions(level);
+        napms(100);
+    }
+
+    mvaddstr(0, 0, "AAAAAAAAAAAAAAAH");
+    refresh();
+    napms(500);
+
+    // Verifying if the level ended with a death or completed
+    if(levelWon(level)) {
+        mvaddstr(3, 0, "NAO");
+        refresh();
+        napms(500);
+        return 5;
+    }
+    else {
+        mvaddstr(2,0, "resetou....");
+        refresh();
+        napms(500);
+        return 4;
     }
 }
 
+/*int gameLoop2(LEVEL *level) {
+    // the loop ends when the player dies or complete the level
+    while(!levelEnded(level)) {
+
+        levelGetUserInput(level);
+        levelHandleColisions(level);
+
+        if(levelGetSequence(level)) % 5 == 0)
+            levelCreateGoldenFruit(level);
+
+        napms(500);
+    }
+
+    // Verifying if the level ended with a death or completed
+    if(levelW0n(level))
+        return 5;
+    else
+        return 4;
+}*/
+
 int main() {
     LEVEL *level;
+    WINDOW *gameWindow;     // Keeps the ncurses' window used in a game loop
     int globalScore = 0;    // Tracks the score of the player in case he wins
     PAIR *scrDimensions;    // Keeps the maximum width and heigth of the terminal opened
     char opCode;            // Used to handle the user input for menu's navigation
@@ -194,32 +234,39 @@ int main() {
             menuOption = enterOption(scrDimensions);
 
         // Handling the option of the menu entered
-        
         switch(menuOption) {
-            case 1:
-                renderGameScreen();
-                level = levelCreate();
-                opCode = gameLoop();
-
+            case 1:     // Game mode 1 entered
+                gameWindow = renderGameScreen(scrDimensions);
+                level = levelCreate(MO_CLASSIC, 1, gameWindow);
+                menuOption = gameLoop(level);
                 break;
-            case 2:
-                renderGameScreen();
-                level = levelCreate();
-                opCode = gameLoop();
 
+            case 2:    // Game mode 2 entered
+                gameWindow = renderGameScreen(scrDimensions);
+                //level = levelCreate();
+                //menuOption = gameLoop(level);
                 break;
-            case 3:
+
+            case 3:    // Exit entered
                 running = false;
                 break;
-            case 4:
-                initialize();
-            case 5:
-                levelReset();
-                opCode = gameLoop();
+
+            case 4:    // If player died in a loop
+                delwin(gameWindow);
+                clear();
+                drawnMenuScreen(scrDimensions);
+                menuOption = 0;
+                break;
+
+            case 5:    // if the player wins a level
+                //levelReset();
+                //opCode = gameLoop(level);
+                break;
         }
     }
 
     pairDelete(&scrDimensions);
+    levelDelete(&level);
     endwin();
     return 0;
 }

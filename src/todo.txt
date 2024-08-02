@@ -82,9 +82,13 @@ GAMELOOP:
 LEVEL:
     VET SNAKES
     score
-    FRUTA;
+    sequence;
+    vet FRUITS;
+    vet BADFRUITS
+    bool ended;
+    bool won;
     WIDTH;
-    HIGTH;
+    HEIGHT;
 
     levelcreate(W, H, N_SNAKES)
         instanciate SNAKE
