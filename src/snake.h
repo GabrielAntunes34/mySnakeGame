@@ -26,6 +26,7 @@
     bool snakeIncrease(SNAKE *snake);
     bool snakeMove(SNAKE *snake, PAIR *NewHeadPosition);
     bool snakeInnerColision(SNAKE *snake);
+    bool isInSnake(SNAKE *snake, PAIR *pos);
 
     void snakeReset(SNAKE **snake, PAIR *stdPos, int stdSize);
     bool snakeDelete(SNAKE **snake);

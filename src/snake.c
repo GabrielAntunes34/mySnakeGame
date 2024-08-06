@@ -108,7 +108,7 @@ bool snakeIncrease(SNAKE *snake) {
     return true;
 }
 
-// Recieves a newPosition to the snake's head and increments it while adjusting the
+// receives a newPosition to the snake's head and increments it while adjusting the
 // rest of the snake's linked list
 bool snakeMove(SNAKE *snake, PAIR *newHeadPosition) {
     if(snake == NULL || newHeadPosition == NULL)
@@ -138,11 +138,26 @@ bool snakeInnerColision(SNAKE *snake) {
     if(snake == NULL || snake->tangible == false || snake->size < 4)
         return false;
 
-    SNAKENODE *aux;     // Pointer used to run trougth the snake
+    SNAKENODE *aux;     // Pointer used to run through the snake
 
     // Comparing the head's position with every snake node.
     for(aux = snake->head->previous; aux != NULL; aux = aux->previous) {
         if(pairCompare(snake->head->pos, aux->pos))
+            return true;
+    }
+    return false;
+}
+
+// Verifies if a givven position is already occupied by the snake
+bool isInSnake(SNAKE *snake, PAIR *pos) {
+    if(snake == NULL || pos == NULL)
+        return false;
+
+    SNAKENODE *aux;    // Pointer used to run through the snake
+
+    // Comparing the given position with every snake node.
+    for(aux = snake->head; aux != NULL; aux = aux->previous) {
+        if(pairCompare(pos, aux->pos))
             return true;
     }
     return false;

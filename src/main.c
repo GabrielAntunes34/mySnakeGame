@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ncurses.h>
+#include <time.h>
 #include "level.h"
 
 #define txtButton1 "   Classic   "
@@ -64,6 +65,7 @@ PAIR *initialize() {
     init_pair(4, COLOR_GREEN, COLOR_BLACK);   // SNAKE
     init_pair(5, COLOR_RED, COLOR_BLACK);     // HEALTHY FRUITS
     init_pair(6, COLOR_MAGENTA, COLOR_BLACK); // UNHEALTHY FRUITS
+    init_pair(7, COLOR_YELLOW, COLOR_BLACK);  // GOLDEN FRUITS
 
     drawnMenuScreen(scrDimensions);
     return scrDimensions;
@@ -169,6 +171,7 @@ int gameLoop(LEVEL *level) {
     while(!levelEnded(level)) {
         levelGetUserInput(level);
         levelHandleColisions(level);
+        levelWin(level);
         napms(100);
     }
 
@@ -207,6 +210,9 @@ int main() {
     char opCode;            // Used to handle the user input for menu's navigation
     int menuOption = 0;     // Used to handle the option of the menu choosed
     bool running = true;    // Used to verify if the game has ended or not
+
+    // Setting a seed to randonly generate fruit positions
+    srand(time(NULL));
 
     // Initializing the game in the menu screen
     scrDimensions = initialize();

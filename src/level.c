@@ -15,16 +15,32 @@ struct level {
     bool won;
 };
 
-// Auxiliar to move the cursor and print inside an especifiv window
+// Auxiliar to move the cursor and print inside an especific window
 void wmvaddch(WINDOW *win, int y, int x, char c) {
     wmove(win, y, x);
     waddch(win, c);
+}
+
+void drawnFruit(WINDOW *win, FRUIT *fruit) {
+    if(fruit != NULL) {
+        // Setting it's collor acordingly
+        if(fruitIsHealthy(fruit) && fruitGetValue(fruit) == FRUIT_DF_VALUE)
+            attrset(COLOR_PAIR(5));
+        else if(!fruitIsHealthy(fruit))
+            attrset(COLOR_PAIR(6));
+        else
+            attrset(COLOR_PAIR(7));
+        
+        // Drwining it in the given position
+        wmvaddch(win, pairGetY(fruitGetPosition(fruit)), pairGetX(fruitGetPosition(fruit)), FRUIT_SPRITE);
+    }
 }
 
 void firstDrawnSnake(WINDOW *win, PAIR *pos, int size) {
     int x = pairGetX(pos);
     int y = pairGetY(pos);
 
+    attrset(COLOR_GREEN);
     wmvaddch(win, y, x, SNAKE_HEAD);
     for(int i = size; i > 1; i--) {
         x--;
@@ -36,6 +52,8 @@ void firstDrawnSnake(WINDOW *win, PAIR *pos, int size) {
 }
 
 void drawnSnake(WINDOW *win, PAIR *tail, PAIR *head, PAIR *newHead) {
+    attrset(COLOR_GREEN);
+
     wmvaddch(win, pairGetY(tail), pairGetX(tail), ' ');
     wmvaddch(win, pairGetY(newHead), pairGetX(newHead), SNAKE_HEAD);
     wmvaddch(win, pairGetY(head), pairGetX(head), SNAKE_BODY);
@@ -64,16 +82,14 @@ LEVEL *levelCreate(int gameMode, int nmrFruits, WINDOW *gameWindow) {
     // Instanciating the snake and the fruit vector
     maxy = getmaxy(gameWindow);
 
-    level->snake = snakeCreate(pairCreate(7, maxy / 2), 6);
+    level->snake = snakeCreate(pairCreate(7, maxy / 2), 3);
     level->fruits = (FRUIT **) malloc(nmrFruits * sizeof(FRUIT *));
     if(level->snake == NULL || level->fruits == NULL)
         return NULL;
-    
 
-    /*
     // Generating the position for all fruits
     for(int i = 0; i < nmrFruits; i++)
-        levelCreateFruit(level, i);
+        levelCreateFruit(level, i, true);
 
     // Instanciating the badFruits array if needed
     if(gameMode == MO_ROTTEN) {
@@ -82,11 +98,10 @@ LEVEL *levelCreate(int gameMode, int nmrFruits, WINDOW *gameWindow) {
             return NULL;
 
         for(int i = 0; i < nmrFruits; i++)
-            levelCreateBadFruit(level, i);
+            levelCreateFruit(level, i, false);
     }
     else
         level->badFruits = NULL;
-    */
 
     firstDrawnSnake(level->win, snakeGetPosition(level->snake), snakeGetSize(level->snake));
     return level;
@@ -130,7 +145,25 @@ bool levelSetScore(LEVEL *level, int newScore) {
     return true;
 }
 
-// Mechanics
+//////////////
+// MECHANICS//
+//////////////
+
+// Verifies if the level has been won by the size of the snake
+// It needs to have the same size as the game window
+void levelWin(LEVEL *level) {
+    if(level == NULL)
+        return;
+    int y, x;
+
+    getmaxyx(level->win, y, x);
+    if(snakeGetSize(level->snake) == x * y) {
+        level->won = true;
+        level->ended = true;
+    }
+    return;
+}
+
 void death(LEVEL *level) {
     if(level != NULL) {
         level->ended = true;
@@ -179,14 +212,109 @@ void levelGetUserInput(LEVEL *level) {
     return;
 }
 
+// Auxiliar used in all fruits creation, that sets the random position for a new fruit
+// whatever the kind
+PAIR *levelCreateFruitAux(LEVEL *level) {
+    PAIR *randomPos;
+    int maxx, maxy;       // Auxiliars to get the position's values
+    int value;            // Receives the randon value
 
-bool levelCreateFruit(LEVEL *level, int index);
-bool levelCreateBadFruit(LEVEL *level, int index);
-bool levelCreateGoldenFruit(LEVEL *level, int index);
+    // verifying if it's possible to create a new fruit with the snake's current size
+    getmaxyx(level->win, maxy, maxx);
+    if((maxy * maxx - snakeGetSize(level->snake)) < 3)
+        return NULL;
 
+    // Generating a new position that insn't inside the snake
+    randomPos = pairCreate(-1, -1);
+    do {
+        value = rand() % maxx - 1;
+        if(value == 0)
+            value++;
+        pairSetX(randomPos, value);
+
+        value = rand() % maxy - 1;
+        if(value == 0)
+            value++;
+        pairSetY(randomPos, value);
+    } while(isInSnake(level->snake, randomPos));
+
+    return randomPos;
+}
+
+bool levelCreateFruit(LEVEL *level, int index, bool healthy) {
+    if(level == NULL || level->fruits == NULL || index > level->nmrFruits)
+        return false;
+
+    // Generating, if it's possible, a random position to the new fruit
+    PAIR *randomPos = levelCreateFruitAux(level);
+    if(randomPos == NULL)
+        return false;
+
+    // Creating the fruit in it's respective array
+    if(healthy) {
+        level->fruits[index] = fruitCreate(randomPos, healthy);
+        drawnFruit(level->win, level->fruits[index]);
+    }
+    else {
+        level->badFruits[index] = fruitCreate(randomPos, healthy);
+        drawnFruit(level->win, level->badFruits[index]);
+    }
+    return true;  
+}
+
+
+bool levelCreateGoldenFruit(LEVEL *level) {
+    if(level == NULL)
+        return false;
+
+    // auxiliar array to keep all the current unhealthy fruits indexes
+    int arr[level->nmrFruits];
+    int nmr;       // Index to run through arr
+    int choosed;   // Index of the choosed fruit to turn into golden
+
+    // Copying all the disponible indexes
+    for(int i = 0; i < level->nmrFruits; i++) {
+        if(level->badFruits[i] != NULL) {
+            arr[nmr] = i;
+            nmr++;
+        }
+    }
+
+    // Randonly choosing one of the unhealthy fruits to turn into golden
+    choosed = rand() % nmr;
+    fruitInvertyHealthiness(level->badFruits[arr[choosed]]);
+    fruitSetValue(level->badFruits[arr[choosed]], 2 * FRUIT_DF_VALUE);
+    drawnFruit(level->win, level->badFruits[arr[choosed]]);
+    return true;
+}
+
+// Auxiliar function to verify if the snake colided with any fruit in a fruit array
+// If so, it'll increase it's size and delete the fruit
+int fruitColision(LEVEL *level, PAIR *pos, FRUIT **fruits) {
+    if(fruits == NULL)
+        return -1;
+    
+    // Verifying through a fruits array if a colision happend
+    // If so, the snake will increase in size and the fruit's value will increment the score
+    for(int i = 0; i < level->nmrFruits; i++) {
+        if(pairCompare(pos, fruitGetPosition(fruits[i]))) {
+            snakeIncrease(level->snake);
+            level->score += fruitGetValue(fruits[i]);
+
+            fruitDelete(&fruits[i]);
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+// Handles all the colisions betwenn the snake and another in-game elements
 bool levelHandleColisions(LEVEL *level) {
     if(level == NULL)
         return false;
+
+    int fruitColided;       // If a colision with a fruit happens, it's index is returned here
 
     // Getting the window's position and limits
     PAIR *snakePos = snakeGetPosition(level->snake);
@@ -201,11 +329,26 @@ bool levelHandleColisions(LEVEL *level) {
         return true;
     }
     // Colision with the snake
-    else if(snakeInnerColision(level->snake)) {
+    if(snakeInnerColision(level->snake)) {
         death(level);
         return true;
     }
     
+    // Colision with a good fruit
+    fruitColided = fruitColision(level, snakeGetPosition(level->snake), level->fruits);
+    if(fruitColided != -1) {
+        level->sequence++;
+        levelCreateFruit(level, fruitColided, true);
+        return true;
+    }
+    // Colision with a bad or golden fruit
+    fruitColided = fruitColision(level, snakeGetPosition(level->snake), level->badFruits);
+    if(fruitColided != -1) {
+        level->sequence = 0;
+        levelCreateFruit(level, fruitColided, false);
+        return true;
+    }
+
     return false;
 }
 

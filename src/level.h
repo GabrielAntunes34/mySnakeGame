@@ -20,12 +20,12 @@
     bool levelWon(LEVEL *level);
 
     bool levelSetScore(LEVEL *level, int newScore);
+    void levelWin(LEVEL *level);
 
     // Mechanics
     void levelGetUserInput(LEVEL *level);
-    bool levelCreateFruit(LEVEL *level, int index);
-    bool levelCreateBadFruit(LEVEL *level, int index);
-    bool levelCreateGoldenFruit(LEVEL *level, int index);
+    bool levelCreateFruit(LEVEL *level, int index, bool healthy);
+    bool levelCreateGoldenFruit(LEVEL *level);
     bool levelHandleColisions(LEVEL *level);
 
     
