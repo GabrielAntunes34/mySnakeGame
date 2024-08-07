@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <ncurses.h>
+#include "ui.h"
 #include "level.h"
 
 struct level {
@@ -14,51 +15,6 @@ struct level {
     bool ended;
     bool won;
 };
-
-// Auxiliar to move the cursor and print inside an especific window
-void wmvaddch(WINDOW *win, int y, int x, char c) {
-    wmove(win, y, x);
-    waddch(win, c);
-}
-
-void drawnFruit(WINDOW *win, FRUIT *fruit) {
-    if(fruit != NULL) {
-        // Setting it's collor acordingly
-        if(fruitIsHealthy(fruit) && fruitGetValue(fruit) == FRUIT_DF_VALUE)
-            attrset(COLOR_PAIR(5));
-        else if(!fruitIsHealthy(fruit))
-            attrset(COLOR_PAIR(6));
-        else
-            attrset(COLOR_PAIR(7));
-        
-        // Drwining it in the given position
-        wmvaddch(win, pairGetY(fruitGetPosition(fruit)), pairGetX(fruitGetPosition(fruit)), FRUIT_SPRITE);
-    }
-}
-
-void firstDrawnSnake(WINDOW *win, PAIR *pos, int size) {
-    int x = pairGetX(pos);
-    int y = pairGetY(pos);
-
-    attrset(COLOR_GREEN);
-    wmvaddch(win, y, x, SNAKE_HEAD);
-    for(int i = size; i > 1; i--) {
-        x--;
-        wmvaddch(win, y, x, SNAKE_BODY);
-    }
-
-    wrefresh(win);
-    return;
-}
-
-void drawnSnake(WINDOW *win, PAIR *tail, PAIR *head, PAIR *newHead) {
-    attrset(COLOR_GREEN);
-
-    wmvaddch(win, pairGetY(tail), pairGetX(tail), ' ');
-    wmvaddch(win, pairGetY(newHead), pairGetX(newHead), SNAKE_HEAD);
-    wmvaddch(win, pairGetY(head), pairGetX(head), SNAKE_BODY);
-    wrefresh(win);
-}
 
 
 LEVEL *levelCreate(int gameMode, int nmrFruits, WINDOW *gameWindow) {
@@ -110,6 +66,10 @@ LEVEL *levelCreate(int gameMode, int nmrFruits, WINDOW *gameWindow) {
 // Getters
 int levelGetScore(LEVEL *level) {
     return ((level != NULL) ? level->score : -1);
+}
+
+int levelGetSequence(LEVEL *level) {
+    return ((level != NULL) ? level->sequence : -1);
 }
 
 SNAKE *levelGetSnake(LEVEL *level) {
@@ -225,17 +185,10 @@ PAIR *levelCreateFruitAux(LEVEL *level) {
         return NULL;
 
     // Generating a new position that insn't inside the snake
+    // we do (max_ - 2) + 1 to guarantee that it won't appear at any border
     randomPos = pairCreate(-1, -1);
     do {
-        value = rand() % maxx - 1;
-        if(value == 0)
-            value++;
-        pairSetX(randomPos, value);
-
-        value = rand() % maxy - 1;
-        if(value == 0)
-            value++;
-        pairSetY(randomPos, value);
+        pairSetxy(randomPos, (rand() % (maxx - 2)) + 1, (rand() % (maxy - 2)) + 1);
     } while(isInSnake(level->snake, randomPos));
 
     return randomPos;
@@ -269,7 +222,7 @@ bool levelCreateGoldenFruit(LEVEL *level) {
 
     // auxiliar array to keep all the current unhealthy fruits indexes
     int arr[level->nmrFruits];
-    int nmr;       // Index to run through arr
+    int nmr = 0;   // Index to run through arr
     int choosed;   // Index of the choosed fruit to turn into golden
 
     // Copying all the disponible indexes
@@ -338,6 +291,7 @@ bool levelHandleColisions(LEVEL *level) {
     fruitColided = fruitColision(level, snakeGetPosition(level->snake), level->fruits);
     if(fruitColided != -1) {
         level->sequence++;
+        drawnScore(level);
         levelCreateFruit(level, fruitColided, true);
         return true;
     }
@@ -345,6 +299,7 @@ bool levelHandleColisions(LEVEL *level) {
     fruitColided = fruitColision(level, snakeGetPosition(level->snake), level->badFruits);
     if(fruitColided != -1) {
         level->sequence = 0;
+        drawnScore(level);
         levelCreateFruit(level, fruitColided, false);
         return true;
     }

@@ -14,6 +14,7 @@
 
     // Getters
     int levelGetScore(LEVEL *level);
+    int levelGetSequence(LEVEL *level);
     SNAKE *levelGetSnake(LEVEL *level);
     FRUIT *levelGetFruit(LEVEL *level, bool healthy, int index);
     bool levelEnded(LEVEL *level);

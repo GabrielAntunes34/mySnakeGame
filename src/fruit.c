@@ -21,7 +21,10 @@ FRUIT *fruitCreate(PAIR *pos, bool healthiness) {
         fruit->pos = pos;
         fruit->value = FRUIT_DF_VALUE;
         fruit->tangible = true;
-        fruit->healthy = true;
+        fruit->healthy = healthiness;
+
+        if(!fruit->healthy)
+            fruit->value = fruit->value * -1;
     }
     return fruit;
 }
