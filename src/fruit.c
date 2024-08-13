@@ -81,7 +81,7 @@ bool fruitInvertyHealthiness(FRUIT *fruit) {
     if(fruit == NULL)
         return false;
 
-    fruit->healthy = !fruit->healthy;
+    fruit->healthy = !(fruit->healthy);
     return true;
 }
 

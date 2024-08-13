@@ -24,12 +24,14 @@ int gameLoop(LEVEL *level) {
 
 int gameLoopRotten(LEVEL *level) {
     // the loop ends when the player dies or complete the level
+    bool colided;
+
     while(!levelEnded(level)) {
 
         levelGetUserInput(level);
-        levelHandleColisions(level);
+        colided = levelHandleColisions(level);
 
-        if(levelGetSequence(level) % 5 == 0 && levelGetSequence(level) != 0)
+        if(colided && levelGetSequence(level) % 5 == 0 && levelGetSequence(level) != 0)
             levelCreateGoldenFruit(level);
 
         levelWin(level);
@@ -44,7 +46,7 @@ int gameLoopRotten(LEVEL *level) {
 }
 
 int main() {
-    LEVEL *level;
+    LEVEL *level = NULL;
     WINDOW *gameWindow;     // Keeps the ncurses' window used in a game loop
     int globalScore = 0;    // Tracks the score of the player in case he wins
     PAIR *scrDimensions;    // Keeps the maximum width and heigth of the terminal opened
@@ -72,7 +74,7 @@ int main() {
         switch(menuOption) {
             case 1:     // Game mode 1 entered
                 gameWindow = renderGameScreen(scrDimensions);
-                level = levelCreate(MO_CLASSIC, 1, gameWindow);
+                level = levelCreate(MO_CLASSIC, 2500, gameWindow);
                 drawnScore(level);
                 menuOption = gameLoop(level);
                 break;
@@ -103,7 +105,8 @@ int main() {
     }
 
     pairDelete(&scrDimensions);
-    levelDelete(&level);
+    if(level != NULL)
+        levelDelete(&level);
     endwin();
     return 0;
 }

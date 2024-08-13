@@ -10,7 +10,7 @@
     #define txtScore "SCORE: "
 
     #define gameWidth 50
-    #define gameHeight 50
+    #define gameHeight 25
 
 
 

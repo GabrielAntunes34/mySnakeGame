@@ -227,18 +227,22 @@ bool levelCreateGoldenFruit(LEVEL *level) {
 
     // Copying all the disponible indexes
     for(int i = 0; i < level->nmrFruits; i++) {
-        if(level->badFruits[i] != NULL) {
+        if(level->badFruits[i] != NULL && !fruitIsHealthy(level->badFruits[i])) {
             arr[nmr] = i;
             nmr++;
         }
     }
 
     // Randonly choosing one of the unhealthy fruits to turn into golden
-    choosed = rand() % nmr;
-    fruitInvertyHealthiness(level->badFruits[arr[choosed]]);
-    fruitSetValue(level->badFruits[arr[choosed]], 2 * FRUIT_DF_VALUE);
-    drawnFruit(level->win, level->badFruits[arr[choosed]]);
-    return true;
+    if(nmr != 0) {
+        choosed = rand() % nmr;
+        fruitInvertyHealthiness(level->badFruits[arr[choosed]]);
+        fruitSetValue(level->badFruits[arr[choosed]], 2 * FRUIT_DF_VALUE);
+        drawnFruit(level->win, level->badFruits[arr[choosed]]);
+        return true;
+    }
+
+    return false;
 }
 
 // Auxiliar function to verify if the snake colided with any fruit in a fruit array
@@ -276,10 +280,12 @@ bool levelHandleColisions(LEVEL *level) {
 
     // Handling colisions with the walls
     // The first col and row of any window is seen as 0 by it's elements
-    if(pairGetX(snakePos) <= 0 || pairGetX(snakePos) >= maxx - 1
-    || pairGetY(snakePos) <= 0 || pairGetY(snakePos) >= maxy - 1) {
-        death(level);
-        return true;
+    if(snakeIsTangible(level->snake)) {
+        if(pairGetX(snakePos) <= 0 || pairGetX(snakePos) >= maxx - 1
+        || pairGetY(snakePos) <= 0 || pairGetY(snakePos) >= maxy - 1) {
+            death(level);
+            return true;
+        }
     }
     // Colision with the snake
     if(snakeInnerColision(level->snake)) {

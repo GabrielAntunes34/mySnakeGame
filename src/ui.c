@@ -9,7 +9,7 @@ void wmvaddch(WINDOW *win, int y, int x, char c) {
 }
 
 
-// Initializes ncurses in the programm, calling the first drawn of the menu screen
+// Initializes ncurses in the program, calling the first drawn of the menu screen
 PAIR *initialize() {
     int maxx, maxy;
     PAIR *scrDimensions;
